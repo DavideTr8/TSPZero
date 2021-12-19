@@ -1,13 +1,14 @@
 import numpy as np
 
 class Game:
-    def __init__(self, n_nodes, distances):
+    def __init__(self, n_nodes: int, distances: np.array):
         """
         A VRP game where each state is labelled by an integer value ranging from 0 to n_nodes,
         the state is represented as the list of the already visited nodes and the distance of the tour is
         computed using the distances matrix.
 
-        :param data:
+        :param n_nodes: int, number of nodes in the VRP.
+        :param distances: distances between each pair of nodes.
         """
         self.n_nodes: int = n_nodes
         self.distances: np.array = distances
