@@ -22,3 +22,7 @@ class Game:
         """Returns if the state of the game is a final state or not."""
         return len(self.state) == self.n_nodes
 
+    def step(self, action: int):
+        """Update the state appending the selected node to visit."""
+        self.state.append(action)
+
