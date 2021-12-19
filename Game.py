@@ -1,7 +1,7 @@
 import numpy as np
 
 class Game:
-    def __init__(self, n_nodes: int, distances: np.array):
+    def __init__(self, n_nodes: int, distances: np.array, state: list=None):
         """
         A VRP game where each state is labelled by an integer value ranging from 0 to n_nodes,
         the state is represented as the list of the already visited nodes and the distance of the tour is
@@ -12,7 +12,7 @@ class Game:
         """
         self.n_nodes: int = n_nodes
         self.distances: np.array = distances
-        self.state: list[int] = []
+        self.state: list[int] = [] if state is None else state
 
     def available_actions(self) -> list[int]:
         """Returns the available actions from the given state."""
@@ -23,6 +23,26 @@ class Game:
         return len(self.state) == self.n_nodes
 
     def step(self, action: int):
-        """Update the state appending the selected node to visit."""
-        self.state.append(action)
+        """Return the state obtained appending the selected node to visit."""
+        new_state = self.state.copy()
+        new_state.append(action)
+        return new_state
+
+    def score(self, opponent_distance: float) -> int:
+        """
+        Return 1 if the total travelled distance is better than the opponent one, else returns -1.
+        :param opponent_distance: float, distance travelled by the opponent (can be the distance found using a
+        heuristic.
+        :return: 1 or -1, 1 for winning and -1 for losing.
+        """
+        if not self.game_over():
+            raise Exception("The score of an unfinished game is trying to be computed.")
+
+        distance = self.distances[self.state[-1], 0]
+        for node_idx in range(self.n_nodes - 1):
+            distance += self.distances[self.state[node_idx], self.state[node_idx + 1]]
+
+        if distance <= opponent_distance:
+            return 1
+        return -1
 
