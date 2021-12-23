@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import torch
 
 from Game import Game
 from NeuralNetwork import NeuralNetwork
@@ -16,20 +17,18 @@ class MCTS:
         self.Ns = {}
         self.Nsa = {}
 
-    def search(self, state=None):
-        if state is None:
-            state = self.game.state
+    def search(self, game=None):
+        if game is None:
+            game = self.game
 
-        valid_moves = self.game.available_actions()
-        if self.game.game_over():
-            return self.game.score(self.shortest_path)
+        valid_moves = game.available_actions()
+        if game.game_over():
+            return game.score(self.shortest_path)
 
-        if state not in self.Ps:
-            self.Ps[state], v = self.nn(state)
-            self.Ps[state] = [self.Ps[state][x] if x in valid_moves else 0 for x in range(self.game.n_nodes)]
-            self.Ps[state] /= sum(self.Ps[state])
-
-            self.Ns[state] = 0
+        if game.state not in self.Ps:
+            state_tensor = torch.tensor([*game.state, *[-1.0]*(game.n_nodes - len(game.state))])
+            self.Ps[game.state], v = self.nn(state_tensor)
+            self.Ns[game.state] = 0
 
         cur_best = -float('inf')
         best_act = -1
@@ -37,30 +36,30 @@ class MCTS:
         # pick the action with the highest upper confidence bound
         for action in range(self.game.n_nodes):
             if action in valid_moves:
-                if (state, action) in self.Qsa:
-                    u = self.Qsa[(state, action)] + mcts_params.cpuct * self.Ps[state][action] * math.sqrt(self.Ns[state]) / (
-                            1 + self.Nsa[(state, action)])
+                if (game.state, action) in self.Qsa:
+                    u = self.Qsa[(game.state, action)] + mcts_params.cpuct * self.Ps[game.state][action] * math.sqrt(self.Ns[game.state]) / (
+                            1 + self.Nsa[(game.state, action)])
                 else:
-                    u = mcts_params.cpuct * self.Ps[state][action] * math.sqrt(self.Ns[state] + mcts_params.EPS)  # Q = 0 ?
+                    u = mcts_params.cpuct * self.Ps[game.state][action] * math.sqrt(self.Ns[game.state] + mcts_params.EPS)  # Q = 0 ?
 
                 if u > cur_best:
                     cur_best = u
                     best_act = action
 
         action = best_act
-        new_state = self.game.step(action)
+        new_game = game.step(action)
 
-        v = self.search(new_state)
+        v = self.search(new_game)
 
-        if (state, action) in self.Qsa:
-            self.Qsa[(state, action)] = (self.Nsa[(state, action)] * self.Qsa[(state, action)] + v) / (self.Nsa[(state, action)] + 1)
-            self.Nsa[(state, action)] += 1
+        if (game.state, action) in self.Qsa:
+            self.Qsa[(game.state, action)] = (self.Nsa[(game.state, action)] * self.Qsa[(game.state, action)] + v) / (self.Nsa[(game.state, action)] + 1)
+            self.Nsa[(game.state, action)] += 1
 
         else:
-            self.Qsa[(state, action)] = v
-            self.Nsa[(state, action)] = 1
+            self.Qsa[(game.state, action)] = v
+            self.Nsa[(game.state, action)] = 1
 
-        self.Ns[state] += 1
+        self.Ns[game.state] += 1
         return v
 
     def getActionProb(self, num_simulations, temp=1):
