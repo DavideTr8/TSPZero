@@ -3,6 +3,13 @@ from State import State
 
 class Game:
     def __init__(self, distances: np.array):
+        """
+        The game is a TSP. A TSP can be described as a complete graph where each node is numbered with
+        numbers 0, ..., n_nodes -1 and each edge (i, j) has as attribute the distance between nodes i and j.
+        That is the Game is fully described by providing the distance matrix between nodes.
+
+        :param distances: np.array, distance matrix.
+        """
         self.distances = distances
         self.n_nodes = self.distances.shape[0]
 
