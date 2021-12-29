@@ -12,6 +12,7 @@ class Game:
         """
         self.distances = distances
         self.n_nodes = self.distances.shape[0]
+        self.all_actions = [x for x in range(self.n_nodes)]
 
     def available_actions(self, state: State) -> list[int]:
         """
