@@ -6,9 +6,8 @@ from State import State
 from Game import Game
 from NeuralNetwork import NN
 
-CPUCT = 1
+CPUCT = 0.1
 NUM_SIMULATIONS = 100
-TEMPERATURE = 1
 
 
 class MCTS:
@@ -67,7 +66,7 @@ class MCTS:
             return self.game.score(state, self.opponent_objective)
 
         if not self.is_visited(state):
-            self.Ps[s], v = self.nn.predict(state)
+            self.Ps[s], v = self.nn(state.mask_distances(), state.to_onehot())
             return v
 
         valid_moves = self.game.available_actions(state)
@@ -75,9 +74,9 @@ class MCTS:
         best_u = -float("inf")
         best_a = None
         for a in valid_moves:
-            u = self.Qsa[s, a] + (CPUCT * self.Ps[s][a] * np.sqrt(sum([self.Nsa[s, b] for b in valid_moves])) /
+            u = self.Qsa[s, a] + (CPUCT * self.Ps[s][0][a] * np.sqrt(sum([self.Nsa[s, b] for b in valid_moves])) /
                                   (self.Nsa[s, a] + 1))
-            if u >= best_u:
+            if u > best_u:
                 best_u = u
                 best_a = a
 
@@ -91,19 +90,19 @@ class MCTS:
 
         return v
 
-    def get_policy(self, state: State) -> list[float]:
+    def get_policy(self, state: State, temp=1) -> list[float]:
         for _ in range(NUM_SIMULATIONS):
             self.search(state)
 
         s = state.visited_nodes
 
-        if TEMPERATURE == 0:
+        if temp == 0:
             policy = [0] * self.game.n_nodes
             argmax = np.argmax([self.Nsa[s, a] for a in self.game.all_actions])
             policy[argmax] = 1
         else:
-            policy = [self.Nsa[s, a] ** (1 / TEMPERATURE) for a in self.game.all_actions]
+            policy = [self.Nsa[s, a] ** (1 / temp) for a in self.game.all_actions]
             sum_policy = sum(policy)
-            policy /= sum_policy
+            policy = [x / sum_policy for x in policy]
 
         return policy

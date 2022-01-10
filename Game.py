@@ -40,8 +40,8 @@ class Game:
         :param action: int, action to be performed. Should be a feasible action.
         :return: State, the new state reached.
         """
-        visited_nodes = state.visited_nodes + [action]
-        return State(action, self.distances[action, :], visited_nodes)
+        visited_nodes = (*state.visited_nodes, action)
+        return State(action, self.distances, visited_nodes)
 
     def get_objective(self, state: State) -> float:
         """
@@ -67,7 +67,7 @@ class Game:
         :return: int, 1 if the lenght of the tour of the player is less or equal to the opponent's, -1 otherwise.
         """
         player_objective = self.get_objective(state)
-        if player_objective <= opponent_objective:
+        if player_objective < opponent_objective:
             return 1
         return -1
 

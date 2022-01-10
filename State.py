@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from utils import adjacency_matrix
 
 class State:
-    def __init__(self, current_node: int, distances: np.array, visited_nodes: list[int]):
+    def __init__(self, current_node: int, distances: np.array, visited_nodes: tuple[int]):
         self.current_node = current_node
         self.distances = distances
         self.visited_nodes = visited_nodes
@@ -19,8 +19,9 @@ class State:
 
     def mask_distances(self):
         A = adjacency_matrix(len(self), self.visited_nodes[:-1])
-        D_prime = self.distances * A
-        return D_prime
+        D_prime = self.distances + (1 - A) * 10
+        dim = A.shape[0]
+        return torch.tensor(D_prime).float().view((1, 1, dim, dim))
 
 
 
